@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Jarvis"
         Width="440"
-        Height="365"
+        Height="435"
         MinWidth="380"
         MinHeight="260"
         WindowStartupLocation="CenterScreen"
@@ -16,6 +16,7 @@
             CornerRadius="12">
         <Grid>
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -71,8 +72,33 @@
                         BorderBrush="{StaticResource PanelBorder}" />
             </Grid>
 
-            <TextBox Grid.Row="2"
-                     Margin="0,22,0,12"
+            <Grid Grid.Row="2" Margin="0,18,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="Local voice"
+                               Foreground="{StaticResource PrimaryText}" />
+                    <TextBlock Text="{Binding VoiceStatus}"
+                               Margin="0,2,12,0"
+                               FontSize="11"
+                               TextWrapping="Wrap"
+                               Foreground="{StaticResource SecondaryText}" />
+                </StackPanel>
+                <Button Grid.Column="1"
+                        MinWidth="124"
+                        Padding="14,7"
+                        Click="ToggleSpeech_Click"
+                        Content="{Binding VoiceButtonText}"
+                        IsEnabled="{Binding CanToggleVoice}"
+                        Background="{StaticResource PanelSurface}"
+                        Foreground="{StaticResource Accent}"
+                        BorderBrush="{StaticResource PanelBorder}" />
+            </Grid>
+
+            <TextBox Grid.Row="3"
+                     Margin="0,18,0,12"
                      Padding="12,9"
                      Text="{Binding Request, UpdateSourceTrigger=PropertyChanged}"
                      Background="{StaticResource PanelSurface}"
@@ -81,7 +107,7 @@
                      CaretBrush="{StaticResource Accent}"
                      ToolTip="Enter a request for Jarvis" />
 
-            <Border Grid.Row="3"
+            <Border Grid.Row="4"
                     Padding="12"
                     Background="{StaticResource PanelSurface}"
                     BorderBrush="{StaticResource PanelBorder}"
@@ -92,13 +118,13 @@
                            Foreground="{StaticResource PrimaryText}" />
             </Border>
 
-            <Grid Grid.Row="4" Margin="0,14,0,0">
+            <Grid Grid.Row="5" Margin="0,14,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <TextBlock VerticalAlignment="Center"
-                           Text="Win+Shift+J to show or hide"
+                           Text="Win+Shift+J to start or stop voice"
                            Foreground="{StaticResource SecondaryText}" />
                 <Button Grid.Column="1"
                         MinWidth="92"
