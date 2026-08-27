@@ -1,0 +1,13 @@
+<Application x:Class="Jarvis.App.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             ShutdownMode="OnExplicitShutdown">
+    <Application.Resources>
+        <SolidColorBrush x:Key="PanelBackground" Color="#10151D" />
+        <SolidColorBrush x:Key="PanelSurface" Color="#18212C" />
+        <SolidColorBrush x:Key="PanelBorder" Color="#2E4357" />
+        <SolidColorBrush x:Key="Accent" Color="#60D6FF" />
+        <SolidColorBrush x:Key="PrimaryText" Color="#F4F8FC" />
+        <SolidColorBrush x:Key="SecondaryText" Color="#91A4B7" />
+    </Application.Resources>
+</Application>
