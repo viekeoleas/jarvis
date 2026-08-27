@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using Jarvis.Codex;
 using Jarvis.Core;
+using Jarvis.Speech;
 
 namespace Jarvis.App;
 
@@ -11,6 +12,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged, IJarvisPanel
 {
     private readonly JarvisController _controller;
     private readonly CodexSession _codexSession;
+    private readonly LocalSpeechTurnController? _speechController;
     private bool _allowClose;
     private string _request = "Introduce yourself in one sentence.";
     private string _status = AssistantViewState.Initial.Status;
@@ -19,13 +21,32 @@ public partial class MainWindow : Window, INotifyPropertyChanged, IJarvisPanel
     private string _signInButtonText = "Sign in";
     private bool _isSignInEnabled;
     private bool _canSend;
+    private string _voiceStatus = "Local speech ready";
+    private string _voiceButtonText = "Start listening";
+    private bool _canToggleVoice = true;
 
-    public MainWindow(JarvisController controller, CodexSession codexSession)
+    public MainWindow(
+        JarvisController controller,
+        CodexSession codexSession,
+        LocalSpeechTurnController? speechController = null,
+        string? speechUnavailableReason = null)
     {
         _controller = controller;
         _codexSession = codexSession;
+        _speechController = speechController;
         _controller.StateChanged += OnStateChanged;
         _codexSession.AccountStateChanged += OnAccountStateChanged;
+        if (_speechController is not null)
+        {
+            _speechController.StateChanged += OnSpeechStateChanged;
+        }
+        else
+        {
+            _voiceStatus = speechUnavailableReason ?? "Local speech is unavailable";
+            _voiceButtonText = "Unavailable";
+            _canToggleVoice = false;
+        }
+
         InitializeComponent();
         DataContext = this;
     }
@@ -74,6 +95,24 @@ public partial class MainWindow : Window, INotifyPropertyChanged, IJarvisPanel
         private set => SetField(ref _canSend, value);
     }
 
+    public string VoiceStatus
+    {
+        get => _voiceStatus;
+        private set => SetField(ref _voiceStatus, value);
+    }
+
+    public string VoiceButtonText
+    {
+        get => _voiceButtonText;
+        private set => SetField(ref _voiceButtonText, value);
+    }
+
+    public bool CanToggleVoice
+    {
+        get => _canToggleVoice;
+        private set => SetField(ref _canToggleVoice, value);
+    }
+
     public bool IsPanelVisible => IsVisible;
 
     public void ShowPanel()
@@ -91,6 +130,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged, IJarvisPanel
         Close();
     }
 
+    public async Task ToggleSpeechAsync()
+    {
+        if (_speechController is null)
+        {
+            Status = "Speech unavailable";
+            Output = VoiceStatus;
+            return;
+        }
+
+        await _speechController.ToggleAsync();
+    }
+
     protected override void OnClosing(CancelEventArgs e)
     {
         if (!_allowClose)
@@ -105,6 +156,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged, IJarvisPanel
     private async void RunTracer_Click(object sender, RoutedEventArgs e)
     {
         await _controller.SubmitAsync(Request);
+    }
+
+    private async void ToggleSpeech_Click(object sender, RoutedEventArgs e)
+    {
+        await ToggleSpeechAsync();
     }
 
     private async void SignIn_Click(object sender, RoutedEventArgs e)
@@ -157,6 +213,56 @@ public partial class MainWindow : Window, INotifyPropertyChanged, IJarvisPanel
                 _ => "Sign in"
             };
         });
+    }
+
+    private void OnSpeechStateChanged(object? sender, SpeechTurnState state)
+    {
+        Dispatcher.BeginInvoke(() =>
+        {
+            VoiceStatus = BuildVoiceStatus(state);
+            VoiceButtonText = state.Phase switch
+            {
+                SpeechTurnPhase.Listening => "Stop and transcribe",
+                SpeechTurnPhase.Transcribing or SpeechTurnPhase.Speaking => "Cancel",
+                _ => "Start listening"
+            };
+            CanToggleVoice = true;
+            Status = state.Status;
+            if (state.Transcript is not null)
+            {
+                Request = state.Transcript;
+            }
+
+            Output = state.Error ?? state.Response ?? state.Transcript ?? state.Status;
+        });
+    }
+
+    private static string BuildVoiceStatus(SpeechTurnState state)
+    {
+        if (state.Error is not null)
+        {
+            return state.Error;
+        }
+
+        var timings = new List<string>();
+        if (state.Backend is not null)
+        {
+            timings.Add(state.Backend.ToString()!);
+        }
+
+        if (state.TranscriptionElapsed is not null)
+        {
+            timings.Add($"STT {state.TranscriptionElapsed.Value.TotalSeconds:0.0}s");
+        }
+
+        if (state.SynthesisElapsed is not null)
+        {
+            timings.Add($"TTS {state.SynthesisElapsed.Value.TotalSeconds:0.0}s");
+        }
+
+        return timings.Count == 0
+            ? state.Status
+            : $"{state.Status} · {string.Join(" · ", timings)}";
     }
 
     private void SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)

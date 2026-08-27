@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net10.0-windows</TargetFramework>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
@@ -15,5 +15,6 @@
   <ItemGroup>
     <ProjectReference Include="../../src/Jarvis.Codex/Jarvis.Codex.csproj" />
     <ProjectReference Include="../../src/Jarvis.Core/Jarvis.Core.csproj" />
+    <ProjectReference Include="../../src/Jarvis.Speech/Jarvis.Speech.csproj" />
   </ItemGroup>
 </Project>
