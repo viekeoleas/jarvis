@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Jarvis"
         Width="440"
-        Height="300"
+        Height="365"
         MinWidth="380"
         MinHeight="260"
         WindowStartupLocation="CenterScreen"
@@ -16,6 +16,7 @@
             CornerRadius="12">
         <Grid>
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
@@ -32,7 +33,7 @@
                                FontSize="22"
                                FontWeight="SemiBold"
                                Foreground="{StaticResource Accent}" />
-                    <TextBlock Text="Windows compatibility tracer"
+                    <TextBlock Text="Official ChatGPT Plus connection"
                                Margin="0,3,0,0"
                                Foreground="{StaticResource SecondaryText}" />
                 </StackPanel>
@@ -46,7 +47,31 @@
                 </Border>
             </Grid>
 
-            <TextBox Grid.Row="1"
+            <Grid Grid.Row="1" Margin="0,18,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{Binding AccountStatus}"
+                               Foreground="{StaticResource PrimaryText}" />
+                    <TextBlock Text="No API key or metered API billing"
+                               Margin="0,2,0,0"
+                               FontSize="11"
+                               Foreground="{StaticResource SecondaryText}" />
+                </StackPanel>
+                <Button Grid.Column="1"
+                        MinWidth="104"
+                        Padding="14,7"
+                        Click="SignIn_Click"
+                        Content="{Binding SignInButtonText}"
+                        IsEnabled="{Binding IsSignInEnabled}"
+                        Background="{StaticResource PanelSurface}"
+                        Foreground="{StaticResource Accent}"
+                        BorderBrush="{StaticResource PanelBorder}" />
+            </Grid>
+
+            <TextBox Grid.Row="2"
                      Margin="0,22,0,12"
                      Padding="12,9"
                      Text="{Binding Request, UpdateSourceTrigger=PropertyChanged}"
@@ -54,9 +79,9 @@
                      Foreground="{StaticResource PrimaryText}"
                      BorderBrush="{StaticResource PanelBorder}"
                      CaretBrush="{StaticResource Accent}"
-                     ToolTip="Enter a compatibility request" />
+                     ToolTip="Enter a request for Jarvis" />
 
-            <Border Grid.Row="2"
+            <Border Grid.Row="3"
                     Padding="12"
                     Background="{StaticResource PanelSurface}"
                     BorderBrush="{StaticResource PanelBorder}"
@@ -67,7 +92,7 @@
                            Foreground="{StaticResource PrimaryText}" />
             </Border>
 
-            <Grid Grid.Row="3" Margin="0,14,0,0">
+            <Grid Grid.Row="4" Margin="0,14,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -79,7 +104,8 @@
                         MinWidth="92"
                         Padding="16,8"
                         Click="RunTracer_Click"
-                        Content="Run tracer"
+                        Content="Send"
+                        IsEnabled="{Binding CanSend}"
                         Background="{StaticResource Accent}"
                         Foreground="#081018"
                         BorderThickness="0" />

@@ -13,6 +13,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="../../src/Jarvis.Codex/Jarvis.Codex.csproj" />
     <ProjectReference Include="../../src/Jarvis.Core/Jarvis.Core.csproj" />
   </ItemGroup>
 </Project>
