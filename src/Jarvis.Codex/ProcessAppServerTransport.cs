@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 
 namespace Jarvis.Codex;
 
@@ -31,6 +32,9 @@ public sealed class ProcessAppServerTransport(CodexProcessOptions options) : IAp
             RedirectStandardInput = true,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
+            StandardInputEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
+            StandardOutputEncoding = Encoding.UTF8,
+            StandardErrorEncoding = Encoding.UTF8,
             CreateNoWindow = true
         };
         startInfo.ArgumentList.Add("app-server");
@@ -141,10 +145,10 @@ public sealed class ProcessAppServerTransport(CodexProcessOptions options) : IAp
         await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
         var output = await outputTask.ConfigureAwait(false);
 
-        if (process.ExitCode != 0 || !output.Contains(options.ExpectedVersion, StringComparison.Ordinal))
+        if (process.ExitCode != 0 || !CodexCompatibility.IsSupportedCliVersion(output))
         {
             throw new InvalidOperationException(
-                $"Jarvis requires Codex {options.ExpectedVersion}; the selected executable reported a different version.");
+                $"Jarvis requires Codex {options.ExpectedVersion}x; the selected executable reported {output.Trim()}.");
         }
     }
 

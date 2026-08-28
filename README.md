@@ -24,7 +24,7 @@ dotnet test Jarvis.slnx
 dotnet run --project src/Jarvis.App/Jarvis.App.csproj
 ```
 
-Jarvis starts in the system tray. `Win+Shift+J` shows the panel and starts or stops a local speech turn. Use the tray menu to show or hide the panel. The Exit tray command shuts down the process and unregisters the hotkey.
+Jarvis starts in the system tray. `Win+Shift+2` shows the panel and starts or stops a local speech turn. A red `СЛУШАЮ` indicator is visible while the microphone is recording. Use the tray menu to show or hide the panel. The Exit tray command shuts down the process and unregisters the hotkey.
 
 Microphone input is 16 kHz mono PCM held in a fixed 60-second memory buffer. Silero VAD ends an utterance after 700 ms of speech-following silence; the separate 60-second session timeout does not invent an utterance. Whisper uses the pinned multilingual `large-v3-turbo-q5_0` model and first attempts the locally built Vulkan backend, with one automatic CPU retry if Vulkan startup fails. After sign-in, only the transcript and concise persona context are sent to Codex. RU, UK, and EN responses are then spoken through local Piper voices. Uncertain transcripts produce a local clarification instead of an invented action.
 
@@ -37,6 +37,8 @@ dotnet run --project tools/Jarvis.SpeechProbe/Jarvis.SpeechProbe.csproj -c Relea
 The probe synthesizes non-personal RU, UK, EN, and mixed-language fixtures, resamples them in memory, transcribes them, and prints the selected backend plus transcription and first-audio latency. It writes no fixture audio to disk.
 
 See [docs/speech-benchmark.md](docs/speech-benchmark.md) for measurements on the target PC and the current recognition-quality caveat.
+
+Install Rustpotter with `./scripts/Install-Rustpotter.ps1`, then use **Enrol** in the panel and say “Jarvis” for five prompted samples. Enrolment and detection stay local. Temporary WAV samples are overwritten and deleted after a `.rpw` wake reference is produced; a four-second background sample rejects obviously noisy references and is also discarded. The hotkey remains available without a model. Advanced threshold calibration can set `JARVIS_WAKE_THRESHOLD` (default `0.52`) and `JARVIS_WAKE_MIN_SCORES` (default `10`) before launch; the measured non-audio result is saved under `%LOCALAPPDATA%\Jarvis\Data\wake-calibration.json`.
 
 For an explicit live subscription-to-local-voice smoke test after ChatGPT sign-in:
 
@@ -56,7 +58,7 @@ Measured on the initial target machine:
 - .NET SDK 10.0.400 and Windows Desktop runtime 10.0.11 install successfully
 - `win-x64` is selected by the .NET host
 - The Release build completes without warnings, and all acceptance tests pass
-- The real WPF process remains responsive while hidden, and `Win+Shift+J` shows and hides the Jarvis window
+- The real WPF process remains responsive while hidden, and `Win+Shift+2` opens Jarvis and starts or stops listening
 - A second launch exits without creating another long-running Jarvis process
 
 Windows 10 Pro 22H2 is outside Microsoft support. Compatibility is therefore best effort and must continue to be exercised on this machine as native dependencies are added.

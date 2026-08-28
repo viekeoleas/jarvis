@@ -11,6 +11,6 @@ public sealed record CodexProcessOptions(
         return new CodexProcessOptions(
             CodexExecutableLocator.Resolve(),
             Path.Combine(localData, "Jarvis", "Codex"),
-            CodexCompatibility.ExpectedCliVersion);
+            CodexCompatibility.SupportedCliVersionFamily);
     }
 }
