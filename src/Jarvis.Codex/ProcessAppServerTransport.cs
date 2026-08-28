@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 
 namespace Jarvis.Codex;
 
@@ -31,6 +32,9 @@ public sealed class ProcessAppServerTransport(CodexProcessOptions options) : IAp
             RedirectStandardInput = true,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
+            StandardInputEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
+            StandardOutputEncoding = Encoding.UTF8,
+            StandardErrorEncoding = Encoding.UTF8,
             CreateNoWindow = true
         };
         startInfo.ArgumentList.Add("app-server");

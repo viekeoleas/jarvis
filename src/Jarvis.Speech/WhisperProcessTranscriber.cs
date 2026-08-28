@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 
 namespace Jarvis.Speech;
 
@@ -49,6 +50,8 @@ public sealed class WhisperProcessTranscriber(WhisperProcessOptions options) : I
             RedirectStandardInput = true,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
+            StandardOutputEncoding = Encoding.UTF8,
+            StandardErrorEncoding = Encoding.UTF8,
             CreateNoWindow = true,
             WorkingDirectory = Path.GetDirectoryName(options.ExecutablePath)
                 ?? Environment.CurrentDirectory
@@ -100,7 +103,6 @@ public sealed class WhisperProcessTranscriber(WhisperProcessOptions options) : I
         startInfo.ArgumentList.Add("auto");
         startInfo.ArgumentList.Add("--no-timestamps");
         startInfo.ArgumentList.Add("--no-prints");
-        startInfo.ArgumentList.Add("--no-fallback");
         startInfo.ArgumentList.Add("--output-file");
         startInfo.ArgumentList.Add("NUL");
         if (backend == WhisperBackend.Cpu)
