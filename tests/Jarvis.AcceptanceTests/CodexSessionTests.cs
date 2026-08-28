@@ -204,7 +204,7 @@ public sealed class CodexSessionTests
         return new CodexSession(client, Path.GetTempPath());
     }
 
-    private static FakeAppServerTransport CreateScriptedTransport(
+    internal static FakeAppServerTransport CreateScriptedTransport(
         object? account,
         bool completeTurn = true)
     {
@@ -308,7 +308,7 @@ public sealed class CodexSessionTests
         return transport;
     }
 
-    private static string? GetMethod(JsonElement message) =>
+    internal static string? GetMethod(JsonElement message) =>
         message.TryGetProperty("method", out var method) ? method.GetString() : null;
 
     private static async Task WaitUntilAsync(Func<bool> condition, CancellationToken cancellationToken)

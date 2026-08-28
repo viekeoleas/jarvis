@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Encodings.Web;
+using Jarvis.Codex;
 using Jarvis.Speech;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
@@ -14,6 +15,37 @@ var fixtures = new[]
 var piper = new PiperProcessSynthesizer(PiperOptions.CreateDefault());
 var whisper = new WhisperProcessTranscriber(WhisperProcessOptions.CreateDefault());
 var results = new List<ProbeResult>();
+
+if (args.Contains("--live-codex", StringComparer.OrdinalIgnoreCase))
+{
+    var localData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+    await using var session = new CodexSession(
+        new CodexAppServerClient(
+            new ProcessAppServerTransport(CodexProcessOptions.CreateDefault())),
+        Path.Combine(localData, "Jarvis", "Workspace"));
+    await session.InitializeAsync(CancellationToken.None);
+    var responder = new VoicePersonaResponder(session);
+    var response = await responder.RespondAsync(
+        "Представься одним коротким предложением.",
+        CancellationToken.None);
+    Console.WriteLine(response);
+    var spoken = await piper.SynthesizeAsync(
+        response,
+        LocalSpeechLanguageDetector.Detect(response),
+        CancellationToken.None);
+    try
+    {
+        await new LocalAudioPlayer().PlayAsync(spoken, CancellationToken.None);
+        Console.WriteLine(
+            $"Live Plus response spoken; first audio {spoken.SynthesisElapsed.TotalMilliseconds:0} ms.");
+    }
+    finally
+    {
+        Array.Clear(spoken.Pcm16);
+    }
+
+    return;
+}
 
 if (args.Contains("--play", StringComparer.OrdinalIgnoreCase))
 {
