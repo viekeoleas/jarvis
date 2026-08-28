@@ -38,6 +38,8 @@ The probe synthesizes non-personal RU, UK, EN, and mixed-language fixtures, resa
 
 See [docs/speech-benchmark.md](docs/speech-benchmark.md) for measurements on the target PC and the current recognition-quality caveat.
 
+Install Rustpotter with `./scripts/Install-Rustpotter.ps1`, then use **Enrol** in the panel and say “Jarvis” for five prompted samples. Enrolment and detection stay local. Temporary WAV samples are overwritten and deleted after a `.rpw` wake reference is produced; a four-second background sample rejects obviously noisy references and is also discarded. The hotkey remains available without a model. Advanced threshold calibration can set `JARVIS_WAKE_THRESHOLD` (default `0.52`) and `JARVIS_WAKE_MIN_SCORES` (default `10`) before launch; the measured non-audio result is saved under `%LOCALAPPDATA%\Jarvis\Data\wake-calibration.json`.
+
 For an explicit live subscription-to-local-voice smoke test after ChatGPT sign-in:
 
 ```powershell

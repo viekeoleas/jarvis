@@ -1,4 +1,5 @@
 using System.IO;
+using System.Media;
 using System.Threading;
 using System.Windows;
 using Jarvis.Codex;
@@ -20,6 +21,7 @@ public partial class App : System.Windows.Application
     private CodexSession? _codexSession;
     private LocalSpeechTurnController? _speechController;
     private ConversationHistoryStore? _history;
+    private HandsFreeSessionController? _handsFree;
     private bool _ownsMutex;
 
     protected override void OnStartup(StartupEventArgs e)
@@ -54,6 +56,16 @@ public partial class App : System.Windows.Application
         }
 
         var speechUnavailableReason = TryCreateSpeechController(voiceResponder);
+        if (_speechController is not null)
+        {
+            var wakeOptions = WakeWordOptions.CreateDefault();
+            _handsFree = new HandsFreeSessionController(
+                new RustpotterWakeWordListener(wakeOptions),
+                new RustpotterWakeWordEnroller(wakeOptions),
+                _speechController,
+                PlayReadyCueAsync);
+        }
+
         var controller = new JarvisController(textResponder);
         _window = new MainWindow(
             controller,
@@ -61,17 +73,23 @@ public partial class App : System.Windows.Application
             _speechController,
             speechUnavailableReason,
             _history,
-            historyUnavailableReason);
+            historyUnavailableReason,
+            _handsFree);
         _panelController = new PanelController(_window);
         _trayHost = new TrayHost(_window, _panelController.TogglePanel, ExitApplication);
         _hotKey = new GlobalHotKey(_window, OnVoiceHotKeyPressed);
         _ = InitializeCodexAsync();
+        if (_handsFree is not null)
+        {
+            _ = _handsFree.StartAsync(CancellationToken.None);
+        }
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
         _hotKey?.Dispose();
         _trayHost?.Dispose();
+        _handsFree?.DisposeAsync().AsTask().GetAwaiter().GetResult();
         _speechController?.Dispose();
         _history?.DisposeAsync().AsTask().GetAwaiter().GetResult();
         _codexSession?.DisposeAsync().AsTask().GetAwaiter().GetResult();
@@ -174,8 +192,15 @@ public partial class App : System.Windows.Application
         _window?.ShowPanel();
         if (_window is not null)
         {
-            _ = _window.ToggleSpeechAsync();
+            _ = _window.HandleVoiceHotKeyAsync();
         }
+    }
+
+    private static Task PlayReadyCueAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        SystemSounds.Asterisk.Play();
+        return Task.CompletedTask;
     }
 
     private static CodexAppServerClient CreateCodexClient()

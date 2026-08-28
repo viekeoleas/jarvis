@@ -16,6 +16,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged, IJarvisPanel
     private readonly LocalSpeechTurnController? _speechController;
     private readonly ConversationHistoryStore? _history;
     private readonly string? _historyUnavailableReason;
+    private readonly HandsFreeSessionController? _handsFree;
     private bool _allowClose;
     private string _request = "Introduce yourself in one sentence.";
     private string _status = AssistantViewState.Initial.Status;
@@ -34,20 +35,28 @@ public partial class MainWindow : Window, INotifyPropertyChanged, IJarvisPanel
         LocalSpeechTurnController? speechController = null,
         string? speechUnavailableReason = null,
         ConversationHistoryStore? history = null,
-        string? historyUnavailableReason = null)
+        string? historyUnavailableReason = null,
+        HandsFreeSessionController? handsFree = null)
     {
         _controller = controller;
         _codexSession = codexSession;
         _speechController = speechController;
         _history = history;
         _historyUnavailableReason = historyUnavailableReason;
+        _handsFree = handsFree;
         _controller.StateChanged += OnStateChanged;
         _codexSession.AccountStateChanged += OnAccountStateChanged;
         if (_speechController is not null)
         {
             _speechController.StateChanged += OnSpeechStateChanged;
         }
-        else
+
+        if (_handsFree is not null)
+        {
+            _handsFree.StateChanged += OnHandsFreeStateChanged;
+        }
+
+        if (_speechController is null)
         {
             _voiceStatus = speechUnavailableReason ?? "Local speech is unavailable";
             _voiceButtonText = "Unavailable";
@@ -149,6 +158,17 @@ public partial class MainWindow : Window, INotifyPropertyChanged, IJarvisPanel
         await _speechController.ToggleAsync();
     }
 
+    public async Task HandleVoiceHotKeyAsync()
+    {
+        if (_handsFree is not null)
+        {
+            await _handsFree.HandleHotKeyAsync();
+            return;
+        }
+
+        await ToggleSpeechAsync();
+    }
+
     protected override void OnClosing(CancelEventArgs e)
     {
         if (!_allowClose)
@@ -167,7 +187,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged, IJarvisPanel
 
     private async void ToggleSpeech_Click(object sender, RoutedEventArgs e)
     {
-        await ToggleSpeechAsync();
+        await HandleVoiceHotKeyAsync();
+    }
+
+    private async void EnrollWake_Click(object sender, RoutedEventArgs e)
+    {
+        if (_handsFree is null)
+        {
+            Status = "Wake phrase unavailable";
+            return;
+        }
+
+        await _handsFree.EnrollAsync(CancellationToken.None);
     }
 
     private async void History_Click(object sender, RoutedEventArgs e)
@@ -269,6 +300,19 @@ public partial class MainWindow : Window, INotifyPropertyChanged, IJarvisPanel
             }
 
             Output = state.Error ?? state.Response ?? state.Transcript ?? state.Status;
+        });
+    }
+
+    private void OnHandsFreeStateChanged(object? sender, HandsFreeState state)
+    {
+        Dispatcher.BeginInvoke(() =>
+        {
+            VoiceStatus = state.Error ?? state.Status;
+            CanToggleVoice = state.Phase != HandsFreePhase.Enrolling;
+            if (state.Phase == HandsFreePhase.Failed)
+            {
+                Status = "Wake phrase unavailable";
+            }
         });
     }
 
