@@ -4,6 +4,7 @@
     <Project Path="src/Jarvis.Codex/Jarvis.Codex.csproj" />
     <Project Path="src/Jarvis.Core/Jarvis.Core.csproj" />
     <Project Path="src/Jarvis.Speech/Jarvis.Speech.csproj" />
+    <Project Path="src/Jarvis.Storage/Jarvis.Storage.csproj" />
     <Project Path="tools/Jarvis.SpeechProbe/Jarvis.SpeechProbe.csproj" />
   </Folder>
   <Folder Name="/tests/">

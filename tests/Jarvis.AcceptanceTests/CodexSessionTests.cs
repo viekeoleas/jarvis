@@ -109,6 +109,60 @@ public sealed class CodexSessionTests
     }
 
     [Fact]
+    public async Task Thread_delete_uses_the_pinned_official_protocol_contract()
+    {
+        var transport = CreateScriptedTransport(new
+        {
+            type = "chatgpt",
+            email = "user@example.com",
+            planType = "plus"
+        });
+        await using var session = CreateSession(transport);
+        await session.InitializeAsync(TestContext.Current.CancellationToken);
+        await session.RespondAsync("Hello", TestContext.Current.CancellationToken);
+
+        await session.DeleteThreadAsync("thread-1", TestContext.Current.CancellationToken);
+
+        var deletion = transport.SentMessages.Single(
+            message => GetMethod(message) == "thread/delete");
+        Assert.Equal(
+            "thread-1",
+            deletion.GetProperty("params").GetProperty("threadId").GetString());
+        Assert.Null(session.CurrentThreadId);
+    }
+
+    [Fact]
+    public async Task Repeated_thread_delete_treats_remote_not_found_as_idempotent_success()
+    {
+        var transport = CreateScriptedTransport(new
+        {
+            type = "chatgpt",
+            email = "user@example.com",
+            planType = "plus"
+        });
+        await using var session = CreateSession(transport);
+        await session.InitializeAsync(TestContext.Current.CancellationToken);
+        transport.MessageHandler = message =>
+        {
+            if (GetMethod(message) == "thread/delete" &&
+                message.TryGetProperty("id", out var id))
+            {
+                transport.Deliver(new
+                {
+                    id = id.GetInt64(),
+                    error = new { code = -32000, message = "Thread not found" }
+                });
+            }
+
+            return Task.CompletedTask;
+        };
+
+        await session.DeleteThreadAsync(
+            "already-deleted",
+            TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
     public async Task Api_key_account_is_rejected_without_exposing_the_key()
     {
         var transport = CreateScriptedTransport(new { type = "apiKey" });
@@ -299,6 +353,9 @@ public sealed class CodexSessionTests
                     }
                     break;
                 case "turn/interrupt":
+                    transport.Deliver(new { id = id.GetInt64(), result = new { } });
+                    break;
+                case "thread/delete":
                     transport.Deliver(new { id = id.GetInt64(), result = new { } });
                     break;
             }

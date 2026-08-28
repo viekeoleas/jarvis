@@ -52,6 +52,7 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel VerticalAlignment="Center">
                     <TextBlock Text="{Binding AccountStatus}"
@@ -62,6 +63,15 @@
                                Foreground="{StaticResource SecondaryText}" />
                 </StackPanel>
                 <Button Grid.Column="1"
+                        Margin="0,0,8,0"
+                        MinWidth="76"
+                        Padding="12,8"
+                        Click="History_Click"
+                        Content="History"
+                        Background="{StaticResource PanelSurface}"
+                        Foreground="{StaticResource Accent}"
+                        BorderBrush="{StaticResource PanelBorder}" />
+                <Button Grid.Column="2"
                         MinWidth="104"
                         Padding="14,7"
                         Click="SignIn_Click"

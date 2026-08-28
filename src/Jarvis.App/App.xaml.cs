@@ -4,6 +4,7 @@ using System.Windows;
 using Jarvis.Codex;
 using Jarvis.Core;
 using Jarvis.Speech;
+using Jarvis.Storage;
 
 namespace Jarvis.App;
 
@@ -18,6 +19,7 @@ public partial class App : System.Windows.Application
     private PanelController? _panelController;
     private CodexSession? _codexSession;
     private LocalSpeechTurnController? _speechController;
+    private ConversationHistoryStore? _history;
     private bool _ownsMutex;
 
     protected override void OnStartup(StartupEventArgs e)
@@ -36,13 +38,30 @@ public partial class App : System.Windows.Application
             CreateCodexClient,
             Path.Combine(localData, "Jarvis", "Workspace"));
 
-        var speechUnavailableReason = TryCreateSpeechController();
-        var controller = new JarvisController(_codexSession);
+        var historyUnavailableReason = TryCreateHistory();
+        IAssistantResponder textResponder = _codexSession;
+        IAssistantResponder voiceResponder = new VoicePersonaResponder(_codexSession);
+        if (_history is not null)
+        {
+            textResponder = new HistoryRecordingResponder(
+                textResponder,
+                _history,
+                () => _codexSession.CurrentThreadId);
+            voiceResponder = new HistoryRecordingResponder(
+                voiceResponder,
+                _history,
+                () => _codexSession.CurrentThreadId);
+        }
+
+        var speechUnavailableReason = TryCreateSpeechController(voiceResponder);
+        var controller = new JarvisController(textResponder);
         _window = new MainWindow(
             controller,
             _codexSession,
             _speechController,
-            speechUnavailableReason);
+            speechUnavailableReason,
+            _history,
+            historyUnavailableReason);
         _panelController = new PanelController(_window);
         _trayHost = new TrayHost(_window, _panelController.TogglePanel, ExitApplication);
         _hotKey = new GlobalHotKey(_window, OnVoiceHotKeyPressed);
@@ -54,6 +73,7 @@ public partial class App : System.Windows.Application
         _hotKey?.Dispose();
         _trayHost?.Dispose();
         _speechController?.Dispose();
+        _history?.DisposeAsync().AsTask().GetAwaiter().GetResult();
         _codexSession?.DisposeAsync().AsTask().GetAwaiter().GetResult();
 
         if (_ownsMutex)
@@ -78,6 +98,19 @@ public partial class App : System.Windows.Application
         {
             // CodexSession publishes the safe user-facing failure state.
         }
+
+        try
+        {
+            if (_history is not null && _codexSession is not null)
+            {
+                var cleanup = new RetentionCleanupService(_history, _codexSession);
+                await cleanup.RunAsync(CancellationToken.None);
+            }
+        }
+        catch
+        {
+            // Expired text is pruned before remote thread deletion and retry tombstones persist.
+        }
     }
 
     private void ExitApplication()
@@ -86,7 +119,7 @@ public partial class App : System.Windows.Application
         Shutdown();
     }
 
-    private string? TryCreateSpeechController()
+    private string? TryCreateSpeechController(IAssistantResponder responder)
     {
         WaveInAudioCapture? capture = null;
         SileroVoiceProbabilityEstimator? estimator = null;
@@ -105,7 +138,7 @@ public partial class App : System.Windows.Application
                 estimator,
                 transcriber,
                 output,
-                new VoicePersonaResponder(_codexSession!));
+                responder);
             capture = null;
             estimator = null;
             return null;
@@ -116,6 +149,22 @@ public partial class App : System.Windows.Application
             estimator?.Dispose();
             _speechController?.Dispose();
             _speechController = null;
+            return exception.Message;
+        }
+    }
+
+    private string? TryCreateHistory()
+    {
+        try
+        {
+            _history = ConversationHistoryStore.CreateDefault();
+            _history.InitializeAsync(CancellationToken.None).GetAwaiter().GetResult();
+            return null;
+        }
+        catch (Exception exception)
+        {
+            _history?.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            _history = null;
             return exception.Message;
         }
     }

@@ -4,7 +4,10 @@ using Jarvis.Core;
 
 namespace Jarvis.Codex;
 
-public sealed class CodexSession : IAssistantResponder, IAsyncDisposable
+public sealed class CodexSession :
+    IAssistantResponder,
+    IConversationThreadDeleter,
+    IAsyncDisposable
 {
     private CodexAppServerClient _client;
     private readonly Func<CodexAppServerClient>? _clientFactory;
@@ -40,6 +43,8 @@ public sealed class CodexSession : IAssistantResponder, IAsyncDisposable
     }
 
     public CodexAccountState AccountState { get; private set; } = CodexAccountState.Starting;
+
+    public string? CurrentThreadId => _threadId;
 
     public event EventHandler<CodexAccountState>? AccountStateChanged;
 
@@ -149,6 +154,28 @@ public sealed class CodexSession : IAssistantResponder, IAsyncDisposable
             }
 
             _turnGate.Release();
+        }
+    }
+
+    public async Task DeleteThreadAsync(string threadId, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(threadId);
+        try
+        {
+            await _client.RequestAsync(
+                "thread/delete",
+                new { threadId },
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (CodexProtocolException exception) when (
+            exception.Message.Contains("not found", StringComparison.OrdinalIgnoreCase) ||
+            exception.Message.Contains("does not exist", StringComparison.OrdinalIgnoreCase))
+        {
+            // A previous cleanup may have deleted the remote thread before the local commit.
+        }
+        if (string.Equals(_threadId, threadId, StringComparison.Ordinal))
+        {
+            _threadId = null;
         }
     }
 

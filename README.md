@@ -63,6 +63,6 @@ Windows 10 Pro 22H2 is outside Microsoft support. Compatibility is therefore bes
 
 ## Privacy boundary
 
-This slice opens no inbound network listener and uses no API key. Microphone PCM, Whisper WAV input, and synthesized speech remain in bounded memory and are cleared after each turn; no audio is written to disk. Jarvis does not write conversation history or diagnostic stderr; the official Codex process owns its private operational and OAuth data under `%LOCALAPPDATA%\Jarvis\Codex`. Threads are ephemeral, and raw prompts or responses are not copied into Jarvis logs.
+This slice opens no inbound network listener and uses no API key. Microphone PCM, Whisper WAV input, and synthesized speech remain in bounded memory and are cleared after each turn; no audio is written to disk. Conversation text and action summaries are stored in `%LOCALAPPDATA%\Jarvis\Data\jarvis.db` with an explicit seven-day deadline and can be viewed with the **History** button. Startup cleanup deletes expired text immediately and retries matching Codex thread deletion through a text-free tombstone if Codex is temporarily unavailable. Long-term memories use a separate non-expiring table. OAuth data remains owned by the official Codex process under `%LOCALAPPDATA%\Jarvis\Codex`; audio, screenshots, OAuth material, and secrets have no database columns and are not copied into Jarvis diagnostics.
 
 See [SPEC.md](SPEC.md) for the approved MVP specification.

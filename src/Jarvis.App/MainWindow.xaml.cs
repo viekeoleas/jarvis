@@ -5,6 +5,7 @@ using System.Windows;
 using Jarvis.Codex;
 using Jarvis.Core;
 using Jarvis.Speech;
+using Jarvis.Storage;
 
 namespace Jarvis.App;
 
@@ -13,6 +14,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged, IJarvisPanel
     private readonly JarvisController _controller;
     private readonly CodexSession _codexSession;
     private readonly LocalSpeechTurnController? _speechController;
+    private readonly ConversationHistoryStore? _history;
+    private readonly string? _historyUnavailableReason;
     private bool _allowClose;
     private string _request = "Introduce yourself in one sentence.";
     private string _status = AssistantViewState.Initial.Status;
@@ -29,11 +32,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged, IJarvisPanel
         JarvisController controller,
         CodexSession codexSession,
         LocalSpeechTurnController? speechController = null,
-        string? speechUnavailableReason = null)
+        string? speechUnavailableReason = null,
+        ConversationHistoryStore? history = null,
+        string? historyUnavailableReason = null)
     {
         _controller = controller;
         _codexSession = codexSession;
         _speechController = speechController;
+        _history = history;
+        _historyUnavailableReason = historyUnavailableReason;
         _controller.StateChanged += OnStateChanged;
         _codexSession.AccountStateChanged += OnAccountStateChanged;
         if (_speechController is not null)
@@ -161,6 +168,33 @@ public partial class MainWindow : Window, INotifyPropertyChanged, IJarvisPanel
     private async void ToggleSpeech_Click(object sender, RoutedEventArgs e)
     {
         await ToggleSpeechAsync();
+    }
+
+    private async void History_Click(object sender, RoutedEventArgs e)
+    {
+        if (_history is null)
+        {
+            Status = "History unavailable";
+            Output = _historyUnavailableReason ?? "Local history is unavailable.";
+            return;
+        }
+
+        try
+        {
+            var messages = await _history.GetRecentMessagesAsync(20, CancellationToken.None);
+            Status = "Recent history";
+            Output = messages.Count == 0
+                ? "No retained conversations."
+                : string.Join(
+                    Environment.NewLine + Environment.NewLine,
+                    messages.Reverse().Select(message =>
+                        $"{(message.Role == "user" ? "You" : "Jarvis")}: {message.Text}"));
+        }
+        catch (Exception exception)
+        {
+            Status = "History failed";
+            Output = exception.Message;
+        }
     }
 
     private async void SignIn_Click(object sender, RoutedEventArgs e)
