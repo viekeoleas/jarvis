@@ -39,7 +39,7 @@ public sealed class HandsFreeSessionController : IAsyncDisposable
             await _wakeListener.StartAsync(cancellationToken).ConfigureAwait(false);
             SetState(new HandsFreeState(
                 HandsFreePhase.WakeListening,
-                "Say Jarvis or press Win+Shift+O"));
+                "Say Jarvis or press Win+Shift+2"));
         }
         catch (Exception exception)
         {

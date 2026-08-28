@@ -159,7 +159,7 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <TextBlock VerticalAlignment="Center"
-                           Text="Win+Shift+O — начать или остановить голос"
+                           Text="Win+Shift+2 — начать или остановить голос"
                            Foreground="{StaticResource SecondaryText}" />
                 <Button Grid.Column="1"
                         MinWidth="92"
