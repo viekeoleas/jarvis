@@ -28,12 +28,12 @@ internal sealed partial class GlobalHotKey : IDisposable
             ?? throw new InvalidOperationException("Jarvis could not create a window handle.");
         _source.AddHook(WindowProcedure);
 
-        var virtualKey = (uint)KeyInterop.VirtualKeyFromKey(Key.J);
+        var virtualKey = (uint)KeyInterop.VirtualKeyFromKey(Key.O);
         _registered = RegisterHotKey(_handle, HotKeyId, ModShift | ModWin, virtualKey);
         if (!_registered)
         {
             throw new Win32Exception(Marshal.GetLastWin32Error(),
-                "Win+Shift+J could not be registered.");
+                "Win+Shift+O could not be registered.");
         }
     }
 

@@ -28,6 +28,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged, IJarvisPanel
     private string _voiceStatus = "Local speech ready";
     private string _voiceButtonText = "Start listening";
     private bool _canToggleVoice = true;
+    private Visibility _listeningIndicatorVisibility = Visibility.Collapsed;
 
     public MainWindow(
         JarvisController controller,
@@ -127,6 +128,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged, IJarvisPanel
     {
         get => _canToggleVoice;
         private set => SetField(ref _canToggleVoice, value);
+    }
+
+    public Visibility ListeningIndicatorVisibility
+    {
+        get => _listeningIndicatorVisibility;
+        private set => SetField(ref _listeningIndicatorVisibility, value);
     }
 
     public bool IsPanelVisible => IsVisible;
@@ -267,15 +274,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged, IJarvisPanel
             AccountStatus = state.Message;
             CanSend = state.Phase == CodexAccountPhase.SignedIn;
             IsSignInEnabled = state.Phase is CodexAccountPhase.SignedOut or
-                CodexAccountPhase.SigningIn;
+                CodexAccountPhase.SigningIn or CodexAccountPhase.Failed;
             SignInButtonText = state.Phase switch
             {
-                CodexAccountPhase.SigningIn => "Cancel",
-                CodexAccountPhase.Restarting => "Retrying",
-                CodexAccountPhase.SignedIn => "Connected",
-                CodexAccountPhase.Failed => "Unavailable",
-                CodexAccountPhase.Starting => "Connecting",
-                _ => "Sign in"
+                CodexAccountPhase.SigningIn => "Отменить вход",
+                CodexAccountPhase.Restarting => "Переподключение...",
+                CodexAccountPhase.SignedIn => "ChatGPT подключён",
+                CodexAccountPhase.Starting => "Подключение...",
+                _ => "Войти через ChatGPT"
             };
         });
     }
@@ -285,6 +291,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged, IJarvisPanel
         Dispatcher.BeginInvoke(() =>
         {
             VoiceStatus = BuildVoiceStatus(state);
+            ListeningIndicatorVisibility = state.Phase == SpeechTurnPhase.Listening
+                ? Visibility.Visible
+                : Visibility.Collapsed;
             VoiceButtonText = state.Phase switch
             {
                 SpeechTurnPhase.Listening => "Stop and transcribe",

@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Jarvis"
         Width="440"
-        Height="435"
+        Height="455"
         MinWidth="380"
         MinHeight="260"
         WindowStartupLocation="CenterScreen"
@@ -72,14 +72,15 @@
                         Foreground="{StaticResource Accent}"
                         BorderBrush="{StaticResource PanelBorder}" />
                 <Button Grid.Column="2"
-                        MinWidth="104"
-                        Padding="14,7"
+                        MinWidth="156"
+                        Padding="16,9"
                         Click="SignIn_Click"
                         Content="{Binding SignInButtonText}"
                         IsEnabled="{Binding IsSignInEnabled}"
-                        Background="{StaticResource PanelSurface}"
-                        Foreground="{StaticResource Accent}"
-                        BorderBrush="{StaticResource PanelBorder}" />
+                        Background="{StaticResource Accent}"
+                        Foreground="#081018"
+                        FontWeight="SemiBold"
+                        BorderThickness="0" />
             </Grid>
 
             <Grid Grid.Row="2" Margin="0,18,0,0">
@@ -89,8 +90,22 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel VerticalAlignment="Center">
-                    <TextBlock Text="Local voice"
-                               Foreground="{StaticResource PrimaryText}" />
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Local voice"
+                                   VerticalAlignment="Center"
+                                   Foreground="{StaticResource PrimaryText}" />
+                        <Border Margin="10,0,0,0"
+                                Padding="9,4"
+                                VerticalAlignment="Center"
+                                Background="#D92D4A"
+                                CornerRadius="10"
+                                Visibility="{Binding ListeningIndicatorVisibility}">
+                            <TextBlock Text="●  СЛУШАЮ"
+                                       FontSize="11"
+                                       FontWeight="Bold"
+                                       Foreground="White" />
+                        </Border>
+                    </StackPanel>
                     <TextBlock Text="{Binding VoiceStatus}"
                                Margin="0,2,12,0"
                                FontSize="11"
@@ -144,7 +159,7 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <TextBlock VerticalAlignment="Center"
-                           Text="Win+Shift+J to start or stop voice"
+                           Text="Win+Shift+O — начать или остановить голос"
                            Foreground="{StaticResource SecondaryText}" />
                 <Button Grid.Column="1"
                         MinWidth="92"
