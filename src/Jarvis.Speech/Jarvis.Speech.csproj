@@ -9,4 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="../Jarvis.Core/Jarvis.Core.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="piper_worker.py" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

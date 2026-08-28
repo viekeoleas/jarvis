@@ -20,6 +20,7 @@ public partial class App : System.Windows.Application
     private PanelController? _panelController;
     private CodexSession? _codexSession;
     private LocalSpeechTurnController? _speechController;
+    private PiperProcessSynthesizer? _piperSynthesizer;
     private ConversationHistoryStore? _history;
     private HandsFreeSessionController? _handsFree;
     private bool _ownsMutex;
@@ -91,6 +92,7 @@ public partial class App : System.Windows.Application
         _trayHost?.Dispose();
         _handsFree?.DisposeAsync().AsTask().GetAwaiter().GetResult();
         _speechController?.Dispose();
+        _piperSynthesizer?.DisposeAsync().AsTask().GetAwaiter().GetResult();
         _history?.DisposeAsync().AsTask().GetAwaiter().GetResult();
         _codexSession?.DisposeAsync().AsTask().GetAwaiter().GetResult();
 
@@ -148,9 +150,9 @@ public partial class App : System.Windows.Application
                 SpeechModelCatalog.GetSileroModelPath());
             var transcriber = new WhisperProcessTranscriber(
                 WhisperProcessOptions.CreateDefault());
-            var output = new PiperSpeech(
-                new PiperProcessSynthesizer(PiperOptions.CreateDefault()),
-                new LocalAudioPlayer());
+            _piperSynthesizer = new PiperProcessSynthesizer(PiperOptions.CreateDefault());
+            _ = PreloadRussianVoiceAsync(_piperSynthesizer);
+            var output = new PiperSpeech(_piperSynthesizer, new LocalAudioPlayer());
             _speechController = new LocalSpeechTurnController(
                 capture,
                 estimator,
@@ -193,6 +195,18 @@ public partial class App : System.Windows.Application
         if (_window is not null)
         {
             _ = _window.HandleVoiceHotKeyAsync();
+        }
+    }
+
+    private static async Task PreloadRussianVoiceAsync(PiperProcessSynthesizer synthesizer)
+    {
+        try
+        {
+            await synthesizer.PreloadAsync(SpeechLanguage.Russian, CancellationToken.None);
+        }
+        catch
+        {
+            // The first spoken response retries worker startup and reports any persistent failure.
         }
     }
 

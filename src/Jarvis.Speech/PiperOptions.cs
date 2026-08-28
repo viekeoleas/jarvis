@@ -2,6 +2,7 @@ namespace Jarvis.Speech;
 
 public sealed record PiperOptions(
     string PythonExecutable,
+    string WorkerScriptPath,
     IReadOnlyDictionary<SpeechLanguage, PiperVoiceDefinition> Voices,
     TimeSpan MaximumSpokenDuration)
 {
@@ -22,6 +23,7 @@ public sealed record PiperOptions(
 
         return new PiperOptions(
             Path.Combine(toolRoot, ".venv", "Scripts", "python.exe"),
+            Path.Combine(AppContext.BaseDirectory, "piper_worker.py"),
             voices,
             TimeSpan.FromSeconds(90));
     }

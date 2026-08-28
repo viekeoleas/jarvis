@@ -16,6 +16,42 @@ var piper = new PiperProcessSynthesizer(PiperOptions.CreateDefault());
 var whisper = new WhisperProcessTranscriber(WhisperProcessOptions.CreateDefault());
 var results = new List<ProbeResult>();
 
+if (args.Contains("--benchmark-piper", StringComparer.OrdinalIgnoreCase))
+{
+    var measurements = new List<object>();
+    foreach (var text in new[]
+             {
+                 "Я готов к работе, сэр.",
+                 "Все системы работают нормально."
+             })
+    {
+        var timer = System.Diagnostics.Stopwatch.StartNew();
+        var speech = await piper.SynthesizeAsync(
+            text,
+            SpeechLanguage.Russian,
+            CancellationToken.None);
+        timer.Stop();
+        measurements.Add(new
+        {
+            Text = text,
+            TotalMilliseconds = Math.Round(timer.Elapsed.TotalMilliseconds),
+            SynthesisMilliseconds = Math.Round(speech.SynthesisElapsed.TotalMilliseconds),
+            AudioSeconds = Math.Round(
+                speech.Pcm16.Length / (double)(speech.SampleRate * sizeof(short)),
+                2)
+        });
+        Array.Clear(speech.Pcm16);
+    }
+
+    Console.WriteLine(JsonSerializer.Serialize(measurements, new JsonSerializerOptions
+    {
+        WriteIndented = true,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    }));
+    await piper.DisposeAsync();
+    return;
+}
+
 if (args.Contains("--live-codex", StringComparer.OrdinalIgnoreCase))
 {
     var localData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
