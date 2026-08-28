@@ -239,6 +239,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged, IJarvisPanel
     {
         try
         {
+            if (_codexSession.AccountState.Phase == CodexAccountPhase.Failed)
+            {
+                await _codexSession.ReconnectAsync(CancellationToken.None);
+            }
+
             if (_codexSession.AccountState.Phase == CodexAccountPhase.SigningIn)
             {
                 await _codexSession.CancelLoginAsync(CancellationToken.None);

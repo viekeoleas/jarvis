@@ -141,10 +141,10 @@ public sealed class ProcessAppServerTransport(CodexProcessOptions options) : IAp
         await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
         var output = await outputTask.ConfigureAwait(false);
 
-        if (process.ExitCode != 0 || !output.Contains(options.ExpectedVersion, StringComparison.Ordinal))
+        if (process.ExitCode != 0 || !CodexCompatibility.IsSupportedCliVersion(output))
         {
             throw new InvalidOperationException(
-                $"Jarvis requires Codex {options.ExpectedVersion}; the selected executable reported a different version.");
+                $"Jarvis requires Codex {options.ExpectedVersion}x; the selected executable reported {output.Trim()}.");
         }
     }
 

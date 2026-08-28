@@ -89,6 +89,40 @@ public sealed class CodexSession :
         return new ChatGptLoginPrompt(loginId, new Uri(authUrl));
     }
 
+    public async Task ReconnectAsync(CancellationToken cancellationToken)
+    {
+        if (_clientFactory is null)
+        {
+            throw new InvalidOperationException("This Codex session cannot recreate its connection.");
+        }
+
+        SetAccountState(new CodexAccountState(
+            CodexAccountPhase.Restarting,
+            "Restarting Codex connection"));
+
+        try
+        {
+            var previousClient = _client;
+            Unsubscribe(previousClient);
+            await previousClient.DisposeAsync().ConfigureAwait(false);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var replacementClient = _clientFactory();
+            _client = replacementClient;
+            _threadId = null;
+            _pendingLoginId = null;
+            Subscribe(replacementClient);
+            await replacementClient.InitializeAsync(cancellationToken).ConfigureAwait(false);
+            await RefreshAccountAsync(cancellationToken).ConfigureAwait(false);
+            Interlocked.Exchange(ref _restartStarted, 0);
+        }
+        catch (Exception exception)
+        {
+            SetAccountState(new CodexAccountState(CodexAccountPhase.Failed, exception.Message));
+            throw;
+        }
+    }
+
     public async Task CancelLoginAsync(CancellationToken cancellationToken)
     {
         var loginId = _pendingLoginId;
