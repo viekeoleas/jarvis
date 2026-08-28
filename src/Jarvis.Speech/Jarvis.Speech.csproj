@@ -6,4 +6,7 @@
     <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.29.0" />
     <PackageReference Include="NAudio" Version="3.0.1" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Jarvis.Core/Jarvis.Core.csproj" />
+  </ItemGroup>
 </Project>

@@ -5,6 +5,7 @@ public enum SpeechTurnPhase
     Idle,
     Listening,
     Transcribing,
+    Thinking,
     Speaking,
     Completed,
     Cancelled,

@@ -1,4 +1,5 @@
 using Jarvis.Speech;
+using Jarvis.Core;
 using System.Buffers.Binary;
 using System.Text;
 using Xunit;
@@ -83,5 +84,52 @@ public sealed class LocalSpeechTests
         SpeechLanguage expected)
     {
         Assert.Equal(expected, LocalSpeechLanguageDetector.Detect(text));
+    }
+
+    [Fact]
+    public async Task Voice_persona_sends_only_transcript_and_required_behavior_context()
+    {
+        var inner = new CapturingResponder("Готово.");
+        var responder = new VoicePersonaResponder(inner);
+
+        var response = await responder.RespondAsync(
+            "Открой блокнот.",
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal("Готово.", response);
+        Assert.Contains("Respond in Russian", inner.Request);
+        Assert.Contains("concise cinematic personal assistant", inner.Request);
+        Assert.Contains("ask one brief clarifying", inner.Request);
+        Assert.EndsWith("Открой блокнот.", inner.Request);
+    }
+
+    [Theory]
+    [InlineData("...", "I didn't catch that")]
+    [InlineData("[неразборчиво]", "Не расслышал")]
+    [InlineData("[нерозбірливо]", "Не розчув")]
+    public async Task Uncertain_transcript_gets_local_clarification_without_Codex(
+        string transcript,
+        string expected)
+    {
+        var inner = new CapturingResponder("must not be used");
+        var responder = new VoicePersonaResponder(inner);
+
+        var response = await responder.RespondAsync(
+            transcript,
+            TestContext.Current.CancellationToken);
+
+        Assert.StartsWith(expected, response);
+        Assert.Empty(inner.Request);
+    }
+
+    private sealed class CapturingResponder(string response) : IAssistantResponder
+    {
+        public string Request { get; private set; } = string.Empty;
+
+        public Task<string> RespondAsync(string request, CancellationToken cancellationToken)
+        {
+            Request = request;
+            return Task.FromResult(response);
+        }
     }
 }

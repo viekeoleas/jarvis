@@ -1,3 +1,5 @@
+using Jarvis.Core;
+
 namespace Jarvis.Speech;
 
 public sealed class LocalSpeechTurnController : IDisposable
@@ -5,6 +7,7 @@ public sealed class LocalSpeechTurnController : IDisposable
     private readonly IAudioCapture _capture;
     private readonly IVoiceProbabilityEstimator _voiceEstimator;
     private readonly ILocalTranscriber _transcriber;
+    private readonly IAssistantResponder _responder;
     private readonly ILocalSpeechOutput _speechOutput;
     private readonly TimeSpan _sessionTimeout;
     private readonly BoundedPcmBuffer _audio;
@@ -22,12 +25,14 @@ public sealed class LocalSpeechTurnController : IDisposable
         IVoiceProbabilityEstimator voiceEstimator,
         ILocalTranscriber transcriber,
         ILocalSpeechOutput speechOutput,
+        IAssistantResponder responder,
         TimeSpan? sessionTimeout = null)
     {
         _capture = capture;
         _voiceEstimator = voiceEstimator;
         _transcriber = transcriber;
         _speechOutput = speechOutput;
+        _responder = responder;
         _sessionTimeout = sessionTimeout ?? TimeSpan.FromSeconds(60);
         _audio = new BoundedPcmBuffer(_sessionTimeout);
         _capture.AudioAvailable += OnAudioAvailable;
@@ -50,7 +55,8 @@ public sealed class LocalSpeechTurnController : IDisposable
         return phase switch
         {
             SpeechTurnPhase.Listening => FinishAsync(timedOut: false),
-            SpeechTurnPhase.Transcribing or SpeechTurnPhase.Speaking => CancelAsync(),
+            SpeechTurnPhase.Transcribing or SpeechTurnPhase.Thinking or
+                SpeechTurnPhase.Speaking => CancelAsync(),
             _ => StartAsync()
         };
     }
@@ -63,7 +69,8 @@ public sealed class LocalSpeechTurnController : IDisposable
         lock (_sync)
         {
             if (State.Phase is SpeechTurnPhase.Listening or
-                SpeechTurnPhase.Transcribing or SpeechTurnPhase.Speaking)
+                SpeechTurnPhase.Transcribing or SpeechTurnPhase.Thinking or
+                SpeechTurnPhase.Speaking)
             {
                 return Task.CompletedTask;
             }
@@ -220,7 +227,21 @@ public sealed class LocalSpeechTurnController : IDisposable
             }
 
             var transcript = transcription.Text.Trim();
-            var response = CreateLocalResponse(transcript);
+            SetState(new SpeechTurnState(
+                SpeechTurnPhase.Thinking,
+                "Thinking",
+                transcript,
+                Backend: transcription.Backend,
+                TranscriptionElapsed: transcription.Elapsed));
+            var response = await _responder.RespondAsync(transcript, turnToken)
+                .ConfigureAwait(false);
+            turnToken.ThrowIfCancellationRequested();
+            if (string.IsNullOrWhiteSpace(response))
+            {
+                throw new InvalidOperationException("Codex returned an empty response.");
+            }
+
+            response = response.Trim();
             SetState(new SpeechTurnState(
                 SpeechTurnPhase.Speaking,
                 "Speaking",
@@ -333,14 +354,6 @@ public sealed class LocalSpeechTurnController : IDisposable
         _audio.Clear();
         Array.Clear(_vadFrame);
     }
-
-    private static string CreateLocalResponse(string transcript) =>
-        LocalSpeechLanguageDetector.Detect(transcript) switch
-        {
-            SpeechLanguage.Ukrainian => $"Я почув: {transcript}",
-            SpeechLanguage.Russian => $"Я услышал: {transcript}",
-            _ => $"I heard: {transcript}"
-        };
 
     private void SetState(SpeechTurnState state)
     {

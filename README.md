@@ -26,7 +26,7 @@ dotnet run --project src/Jarvis.App/Jarvis.App.csproj
 
 Jarvis starts in the system tray. `Win+Shift+J` shows the panel and starts or stops a local speech turn. Use the tray menu to show or hide the panel. The Exit tray command shuts down the process and unregisters the hotkey.
 
-Microphone input is 16 kHz mono PCM held in a fixed 60-second memory buffer. Silero VAD ends an utterance after 700 ms of speech-following silence; the separate 60-second session timeout does not invent an utterance. Whisper uses the pinned multilingual `large-v3-turbo-q5_0` model and first attempts the locally built Vulkan backend, with one automatic CPU retry if Vulkan startup fails. RU, UK, and EN responses use local Piper voices. The current deterministic response echoes the recognized command without contacting Codex.
+Microphone input is 16 kHz mono PCM held in a fixed 60-second memory buffer. Silero VAD ends an utterance after 700 ms of speech-following silence; the separate 60-second session timeout does not invent an utterance. Whisper uses the pinned multilingual `large-v3-turbo-q5_0` model and first attempts the locally built Vulkan backend, with one automatic CPU retry if Vulkan startup fails. After sign-in, only the transcript and concise persona context are sent to Codex. RU, UK, and EN responses are then spoken through local Piper voices. Uncertain transcripts produce a local clarification instead of an invented action.
 
 Run the in-memory multilingual probe after installing the assets:
 
@@ -37,6 +37,12 @@ dotnet run --project tools/Jarvis.SpeechProbe/Jarvis.SpeechProbe.csproj -c Relea
 The probe synthesizes non-personal RU, UK, EN, and mixed-language fixtures, resamples them in memory, transcribes them, and prints the selected backend plus transcription and first-audio latency. It writes no fixture audio to disk.
 
 See [docs/speech-benchmark.md](docs/speech-benchmark.md) for measurements on the target PC and the current recognition-quality caveat.
+
+For an explicit live subscription-to-local-voice smoke test after ChatGPT sign-in:
+
+```powershell
+dotnet run --project tools/Jarvis.SpeechProbe/Jarvis.SpeechProbe.csproj -c Release -- --live-codex
+```
 
 On first use, choose **Sign in** in the panel. Codex app-server opens the official ChatGPT browser flow and owns token persistence and refresh under the isolated Jarvis application-data directory. Jarvis accepts only `chatgpt` account mode and reports the plan returned by Codex.
 

@@ -104,7 +104,8 @@ public partial class App : System.Windows.Application
                 capture,
                 estimator,
                 transcriber,
-                output);
+                output,
+                new VoicePersonaResponder(_codexSession!));
             capture = null;
             estimator = null;
             return null;

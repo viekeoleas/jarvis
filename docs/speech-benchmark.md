@@ -39,3 +39,7 @@ Run a local audible playback check with:
 ```powershell
 dotnet run --project tools/Jarvis.SpeechProbe/Jarvis.SpeechProbe.csproj -c Release -- --play
 ```
+
+## Live Plus-to-voice smoke test
+
+With the isolated Jarvis ChatGPT account already signed in, the live probe returned `Я — Джарвис, ваш лаконичный цифровой помощник.` and spoke it through the Russian local voice. Piper first audio was available in 3.33 seconds. The request used managed ChatGPT authentication; no OpenAI API key or metered speech service was involved.

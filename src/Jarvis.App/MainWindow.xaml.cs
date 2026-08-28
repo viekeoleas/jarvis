@@ -223,7 +223,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged, IJarvisPanel
             VoiceButtonText = state.Phase switch
             {
                 SpeechTurnPhase.Listening => "Stop and transcribe",
-                SpeechTurnPhase.Transcribing or SpeechTurnPhase.Speaking => "Cancel",
+                SpeechTurnPhase.Transcribing or SpeechTurnPhase.Thinking or
+                    SpeechTurnPhase.Speaking => "Cancel",
                 _ => "Start listening"
             };
             CanToggleVoice = true;

@@ -4,6 +4,7 @@
     <TargetFramework>net10.0-windows</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="../../src/Jarvis.Codex/Jarvis.Codex.csproj" />
     <ProjectReference Include="../../src/Jarvis.Speech/Jarvis.Speech.csproj" />
   </ItemGroup>
 </Project>
