@@ -12,5 +12,6 @@
     <ProjectReference Include="../Jarvis.Codex/Jarvis.Codex.csproj" />
     <ProjectReference Include="../Jarvis.Core/Jarvis.Core.csproj" />
     <ProjectReference Include="../Jarvis.Speech/Jarvis.Speech.csproj" />
+    <ProjectReference Include="../Jarvis.Storage/Jarvis.Storage.csproj" />
   </ItemGroup>
 </Project>
